@@ -12,7 +12,12 @@ from pathlib import Path
 
 # ===== 加载数据 =====
 csv_path = Path(__file__).parent / "data" / "latest.csv"
+if not csv_path.exists():
+    print("找不到 data/latest.csv")
+    print("请先运行：python update.py  （抓取数据并生成 CSV）")
+    raise SystemExit(1)
 df = pd.read_csv(csv_path, encoding="utf-8-sig")
+
 
 
 def pick(df, candidates):
