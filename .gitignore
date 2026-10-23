@@ -1,0 +1,11 @@
+#已被 Python 自动保护
+.venv/
+
+#运行脚本时自动生成
+__pycache__/
+
+#比写 data/ 更好——保留了目录
+data/*.csv
+
+##个人环境
+.vscode/
