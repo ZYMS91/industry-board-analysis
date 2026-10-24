@@ -7,6 +7,7 @@
 ## 目录结构
 
 ```
+PLAN.md       学习路径与阶段验收（本项目的路线图，先看这个）
 update.py     抓取 → data/*.csv            唯一联网的脚本
 analyze.py    读快照，输出三段分析          不联网
 chart.py      读快照，画 top10.png          不联网
