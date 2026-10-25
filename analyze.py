@@ -9,7 +9,7 @@ r"""
 """
 import pandas as pd
 from pathlib import Path
-
+from utils import pick
 # ===== 加载数据 =====
 csv_path = Path(__file__).parent / "data" / "latest.csv"
 if not csv_path.exists():
@@ -20,17 +20,7 @@ df = pd.read_csv(csv_path, encoding="utf-8-sig")
 
 
 
-def pick(df, candidates):
-    """从候选字段名里，挑出第一个「存在且有值」的。都没有就返回 None。
 
-    为什么需要这个：不同数据源字段不一样。东财有总市值/换手率，
-    同花顺没有。如果直接 df['换手率']，拿到的是全空列，
-    算出来的结果看着正常、其实是错的 —— 这种静默错误最危险。
-    """
-    for col in candidates:
-        if col in df.columns and df[col].notna().any():
-            return col
-    return None
 
 
 # ===== 数据自检（每次分析前都要做）=====

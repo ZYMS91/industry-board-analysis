@@ -1,5 +1,5 @@
 import pandas as pd
-from analyze import pick
+from utils import pick
 def test_pick_skips_empty_column():
     df=pd.DataFrame({
         "板块名称":["芯片","电气"],
