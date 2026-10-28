@@ -6,7 +6,7 @@ CSV=Path(__file__).parent/"data"/"latest.csv"
 df=pd.read_csv(CSV,encoding="utf-8-sig")
 n=len(df)
 up=int((df["涨跌幅"]>0).sum())
-down=(int(df["涨跌幅"]<0).sum())
+down=int((df["涨跌幅"]<0).sum())
 r=df["涨跌幅"].corr(df["成交额"])
 r=round(r,3)
 top5=df.sort_values("成交额",ascending=False).head(5)
