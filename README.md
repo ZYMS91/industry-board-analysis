@@ -82,3 +82,8 @@ python stats.py data/latest.csv     # 报告要用的分布 / 相关系数 / p �
 - Python 3.14.5，虚拟环境 `.venv`（调用方式：`.venv\Scripts\python.exe update.py`）
 - pandas 3.0.6 / matplotlib 3.11.2 / akshare 1.19.1
 - Windows 10 + VS Code
+
+## 维护约定
+
+- **文档只写判据和坑**：为什么这样做、踩过什么坑、口径怎么选。看代码/看数据就能知道的内容不写进来。
+- 过程、实测输出、失败明细写 `reports/`；本文件只保留能当验收标准的句子。
