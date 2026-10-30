@@ -73,3 +73,4 @@
 | 10-27 | 快照 2/3；`summarize.py` 加 `check_numbers` 防幻觉校验 | `4 passed`，但 `summarize.py` 实跑 `TypeError`（已提交） |
 | 10-28 | 快照 3/3，阶段 0 四条全绿；当日在 `douyin-kb`，day01 零改动 | `4 passed`；`summarize.py` 报错未修 |
 | 10-29 | PLAN 瘦身 9.5→4KB；缺口 6 核实已修；README 加维护约定；`summarize.py` 重构出 `build_nums` | `4 passed`、`summarize.py` exit 0；`build_nums` 零测试覆盖（明日补） |
+| 10-30 | 补 `build_nums` 测试 + `summarize.py` 加 `__main__` 保护；PLAN 阶段 2 加"上架技能"判据 | `5 passed`；但测试未断言 `r`（明日补） |
