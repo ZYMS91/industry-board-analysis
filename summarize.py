@@ -35,9 +35,10 @@ def check_numbers(text, nums):
     # 第 4 步：全部命中
     print(f"校验通过：{len(found)} 个数字全部可溯源")
 
-nums = build_nums(CSV_latest)
-# 用算出来的数字拼一段中文文案（f-string 里的 {n} 会被替换成实际数值）
-text = f"今日 {nums['行数']} 个板块中，上涨 {nums['上涨']} 个，下跌 {nums['下跌']} 个。涨跌幅与成交额的相关系数 r={nums['r']}，成交额前五板块占全市场 {nums['top5_集中度']}%。"
+if __name__ == "__main__":
+    nums = build_nums(CSV_latest)
+    # 用算出来的数字拼一段中文文案（f-string 里的 {n} 会被替换成实际数值）
+    text = f"今日 {nums['行数']} 个板块中，上涨 {nums['上涨']} 个，下跌 {nums['下跌']} 个。涨跌幅与成交额的相关系数 r={nums['r']}，成交额前五板块占全市场 {nums['top5_集中度']}%。"
 
-print(text)              # 先把文案打出来看
-check_numbers(text, nums)  # 再校验
+    print(text)              # 先把文案打出来看
+    check_numbers(text, nums)  # 再校验
