@@ -57,6 +57,11 @@ def llm_summary(nums):
     )
     resp.raise_for_status()
     comment = resp.json()["choices"][0]["message"]["content"].strip()
+
+    # 评述里出现任何数字 → 模型没遵守约束，丢弃整句评述（局部降级，不影响数字部分）
+    if re.search(r"\d", comment):
+        raise RuntimeError("LLM 评述含数字，已丢弃")
+
     return template_summary(nums) + " " + comment
 def generate(nums):
     try:
