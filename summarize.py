@@ -2,9 +2,11 @@ import re
 import pandas as pd
 from pathlib import Path
 import os
-
+from dotenv import load_dotenv
+import requests
 
 CSV_latest = Path(__file__).parent / "data" / "latest.csv"
+load_dotenv(Path(__file__).parent / ".env")
 def build_nums(CSV_latest):
     df=pd.read_csv(CSV_latest,encoding="utf-8-sig")
     n=len(df)
@@ -21,7 +23,6 @@ def check_numbers(text, nums):
     # 第 1 步：从文案里捞出所有数字（返回字符串列表）
     # r"-?\d+\.?\d*" 拆开：-? 可选负号 / \d+ 至少一位数字 / \.? 可选小数点 / \d* 任意位数字
     found = re.findall(r"-?\d+\.?\d*", text)
-
     # 第 2 步：把 nums 的所有值转成字符串，装进集合（集合查找比列表快，且自动去重）
     #alloed = {str(v),for v in nums.values()}:
     allowed = set()
@@ -45,8 +46,18 @@ def llm_summary(nums):
     key = os.environ.get("DEEPSEEK_API_KEY")
     if not key:
         raise RuntimeError("未配置 DEEPSEEK_API_KEY")
-    return "LLM 接口明天接"
+    url = "https://api.deepseek.com/chat/completions"
+    prompt = "用一句中文定性描述今天 A 股行业板块的行情，可以说普涨、普跌、分化、资金集中度强弱。不要出现任何数字、百分比、具体板块名。只输出这一句话，不要解释。"
 
+    resp = requests.post(
+    url,
+    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+    json={"model": "deepseek-chat", "messages": [{"role": "user", "content": prompt}]},
+    timeout=30,
+    )
+    resp.raise_for_status()
+    comment = resp.json()["choices"][0]["message"]["content"].strip()
+    return template_summary(nums) + " " + comment
 def generate(nums):
     try:
         return llm_summary(nums)
