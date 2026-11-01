@@ -75,3 +75,4 @@
 | 10-29 | PLAN 瘦身 9.5→4KB；缺口 6 核实已修；README 加维护约定；`summarize.py` 重构出 `build_nums` | `4 passed`、`summarize.py` exit 0；`build_nums` 零测试覆盖（明日补） |
 | 10-30 | 补 `build_nums` 测试 + `summarize.py` 加 `__main__` 保护；PLAN 阶段 2 加"上架技能"判据 | `5 passed`；但测试未断言 `r`（明日补） |
 | 10-31 | 补录 10-30 错误库（目标位移第3次→停止线）；README 收口（判据命令 0 行）；`test_build_nums` 补 `r`（approx）与字段齐全断言；`summarize.py` 加 `template_summary`/`generate` 降级路径（`llm_summary` 仍是占位串） | `5 passed`；判据命令退出码 1，停止线解除；20:31 唯一动作（真调 LLM）未做，全天 08:59 后零 commit |
+| 11-01 | `llm_summary` 接 DeepSeek 真调用（`requests.post`+`timeout=30`；数字由模板注入，LLM 只写定性评述）；补评述数字检查；删 `probe_api.py`；破坏实验暴露"LLM 没数据也说无法确定"能绕过数字检查 | 实测有 key → 正文 + `校验通过：5 个数字` + exit 0；无 key → 降级 + exit 0；`pytest -q` 5 passed；3 次 commit（21:19/21:21/21:26）；新函数仍零测试（第 3 次 → 停止线生效，接口层暂停） |
