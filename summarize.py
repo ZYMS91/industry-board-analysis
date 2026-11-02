@@ -34,6 +34,11 @@ def check_numbers(text, nums):
         if x not in allowed:
             print("不通过：", x, "无法溯源")   # 报出是哪个数字对不上
             raise SystemExit(1)               # 退出码 1，告诉调用方“校验失败”
+            # 数量下限：文案里的数字个数不能少于源数据的字段数，否则等于没校验
+    if len(found) < len(nums):
+        print("不通过：文案里只找到", len(found), "个数字，少于源数据字段数", len(nums))
+        raise SystemExit(1)
+
 
     # 第 4 步：全部命中
     print(f"校验通过：{len(found)} 个数字全部可溯源")
@@ -76,3 +81,4 @@ if __name__ == "__main__":
     text = generate(nums)
     print(text)
     check_numbers(text, nums)  # 再校验
+
