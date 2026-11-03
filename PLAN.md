@@ -86,3 +86,4 @@
 | 10-31 | 补录 10-30 错误库（目标位移第3次→停止线）；README 收口（判据命令 0 行）；`test_build_nums` 补 `r`（approx）与字段齐全断言；`summarize.py` 加 `template_summary`/`generate` 降级路径（`llm_summary` 仍是占位串） | `5 passed`；判据命令退出码 1，停止线解除；20:31 唯一动作（真调 LLM）未做，全天 08:59 后零 commit |
 | 11-01 | `llm_summary` 接 DeepSeek 真调用（`requests.post`+`timeout=30`；数字由模板注入，LLM 只写定性评述）；补评述数字检查；删 `probe_api.py`；破坏实验暴露"LLM 没数据也说无法确定"能绕过数字检查 | 实测有 key → 正文 + `校验通过：5 个数字` + exit 0；无 key → 降级 + exit 0；`pytest -q` 5 passed；3 次 commit（21:19/21:21/21:26）；新函数仍零测试（第 3 次 → 停止线生效，接口层暂停） |
 | 11-02 | 补 3 条测试（`check_numbers` 下限、`template_summary` 全字段、`generate` 降级），11-01 停止线解除 | `8 passed`（实测，`5625f58`）；但下限只比数量、`test_template_summary` 是裸子串断言 → 上涨/下跌 对调仍全绿；反向实验一度改错对象；全天 1 次 commit 21:31；求职第 5 天零 |
+| 11-03 | 投递推迟到 2027-02-20 并写 3 条前置条件（`7392bad` 20:19）；`check_numbers` 改集合差集覆盖检查、断言绑字段名、补正向测试 | `9 passed`（实测）；`probe_check.py` 实测 `DUPES_EXIT=1`、`SWAP_FAILED=False` → 11-02 停止线四条解除条件全中、已解除；但旧 3 条裸数字断言未删（打补丁第3次）→ 新停止线生效；阶段 1 判据 ① 零进展；日志缺失，已补 |
