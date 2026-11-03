@@ -20,28 +20,26 @@ def build_nums(CSV_latest):
     return nums
 # 校验函数：确认文案里的每个数字都能在 nums 里找到出处
 def check_numbers(text, nums):
-    # 第 1 步：从文案里捞出所有数字（返回字符串列表）
-    # r"-?\d+\.?\d*" 拆开：-? 可选负号 / \d+ 至少一位数字 / \.? 可选小数点 / \d* 任意位数字
     found = re.findall(r"-?\d+\.?\d*", text)
-    # 第 2 步：把 nums 的所有值转成字符串，装进集合（集合查找比列表快，且自动去重）
-    #alloed = {str(v),for v in nums.values()}:
+
     allowed = set()
     for v in nums.values():
         allowed.add(str(v))
 
-    # 第 3 步：逐个核对
+    # 逐个核对：文案里的每个数字都必须在白名单里
     for x in found:
         if x not in allowed:
-            print("不通过：", x, "无法溯源")   # 报出是哪个数字对不上
-            raise SystemExit(1)               # 退出码 1，告诉调用方“校验失败”
-            # 数量下限：文案里的数字个数不能少于源数据的字段数，否则等于没校验
-    if len(found) < len(nums):
-        print("不通过：文案里只找到", len(found), "个数字，少于源数据字段数", len(nums))
+            print("不通过：", x, "无法溯源")
+            raise SystemExit(1)
+
+    # 覆盖检查：白名单里的每个值都必须在文案里出现
+    missing = allowed - set(found)
+    if missing:
+        print("不通过：文案缺少这些字段值", missing)
         raise SystemExit(1)
 
-
-    # 第 4 步：全部命中
     print(f"校验通过：{len(found)} 个数字全部可溯源")
+
 
 def template_summary(nums):
     text = f"今日 {nums['行数']} 个板块中，上涨 {nums['上涨']} 个，下跌 {nums['下跌']} 个。涨跌幅与成交额的相关系数 r={nums['r']}，成交额前五板块占全市场 {nums['top5_集中度']}%。"
