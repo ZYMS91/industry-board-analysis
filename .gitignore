@@ -12,3 +12,9 @@ data/*.csv
 
 #密钥文件，禁止提交
 .env
+
+#个人复盘与计划，不公开到 GitHub
+reports/review-*.md
+reports/错误库.md
+reports/plan-*.md
+reports/PLAN-log-*.md
