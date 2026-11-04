@@ -34,10 +34,6 @@ def test_template_summary_contains_all_numbers():
     assert f"r={nums['r']}" in text
     assert f"占全市场 {nums['top5_集中度']}%" in text
 
-    assert "83" in text
-    assert "-0.263" in text
-    assert "30.0" in text
-
 def test_generate_falls_back_without_key(monkeypatch):
     # 把环境变量删掉，模拟"用户没配 key"
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
@@ -51,4 +47,9 @@ def test_check_numbers_accepts_valid_text():
     nums = {"行数": 90, "上涨": 7, "下跌": 83, "r": -0.263, "top5_集中度": 30.0}
     text = template_summary(nums)
     check_numbers(text, nums)      # 正常文案不该抛异常
+
+def test_check_numbers_rejects_duplicates():
+    nums = {"行数": 90, "上涨": 7, "下跌": 83, "r": -0.263, "top5_集中度": 30.0}
+    with pytest.raises(SystemExit):
+        check_numbers("90 90 90 90 90", nums)
 
