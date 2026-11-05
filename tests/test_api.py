@@ -1,5 +1,14 @@
 from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
+from pathlib import Path
+import pytest
+
+CSV = Path(__file__).parent.parent / "data" / "latest.csv"
+
+# 没有快照文件时跳过（克隆仓库后 data/ 里没有 CSV）
+pytestmark = pytest.mark.skipif(not CSV.exists(), reason="没有快照文件，跳过接口测试")
+
 
 
 def test_summary_endpoint_ok(monkeypatch):
