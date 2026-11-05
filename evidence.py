@@ -101,6 +101,37 @@ def pytest_line() -> tuple[str, int]:
     return tail, code
 
 
+def prev_evidence() -> dict[str, int]:
+    """读上一份 evidence-*.md，抽出几个关键数字，用来做环比。没有上一份就返回空。"""
+    today = dt.date.today().isoformat()
+    files = sorted(p for p in REPORTS.glob("evidence-*.md") if p.name != f"evidence-{today}.md")
+    if not files:
+        return {}
+    text = files[-1].read_text(encoding="utf-8")
+    pats = {
+        "commits": r"提交数\s*\|\s*\*\*(\d+)\*\*",
+        "tests": r"(\d+)\s+passed",
+        "auto": r"自动采集\s*\|\s*\*\*(\d+)\*\*",
+        "errors": r"错误库\s*\*\*(\d+)\*\*",
+        "reviews": r"复盘文档\s*\*\*(\d+)\*\*",
+    }
+    out = {}
+    for k, p in pats.items():
+        m = re.search(p, text)
+        if m:
+            out[k] = int(m.group(1))
+    out["_file"] = files[-1].name  # type: ignore[assignment]
+    return out
+
+
+def delta(cur: int, prev: dict[str, int], key: str) -> str:
+    """把环比写成 +N / -N / 持平；没有上一份就是「首次」。"""
+    if key not in prev:
+        return "首次"
+    d = cur - prev[key]
+    return "持平" if d == 0 else f"{d:+d}"
+
+
 def main() -> None:
     today = dt.date.today().isoformat()
     commits, active_days, first, last = git_commits()
@@ -111,6 +142,8 @@ def main() -> None:
     ptest, _ = pytest_line()
     live_code, live_out = run([sys.executable, "summarize.py"])
     live_last = [ln for ln in live_out.splitlines() if ln.strip()][-1:] or ["[无输出]"]
+    prev = prev_evidence()
+    tests_n = int(m.group(1)) if (m := re.search(r"(\d+)\s+passed", ptest)) else 0
 
     gaps = []
     if not api:
@@ -138,6 +171,25 @@ def main() -> None:
         f"| 测试 | `{ptest}` | `pytest -q` |",
         f"| 自动采集 | **{auto}** 天 15:35 快照（CSV 共 {csv_total} 份） | `ls data/` |",
         f"| 实跑 | exit={live_code}，末行：`{live_last[0]}` | `python summarize.py` |",
+        "",
+        "## 环比（对比上一份证据）",
+        "",
+    ]
+    if prev:
+        lines += [
+            f"| 指标 | 本期 | 上期 | 变化 |",
+            "|---|---|---|---|",
+            f"| 提交 | {commits} | {prev.get('commits', '?')} | {delta(commits, prev, 'commits')} |",
+            f"| 测试通过数 | {tests_n} | {prev.get('tests', '?')} | {delta(tests_n, prev, 'tests')} |",
+            f"| 自动采集天数 | {auto} | {prev.get('auto', '?')} | {delta(auto, prev, 'auto')} |",
+            f"| 错误库条数 | {err_rows} | {prev.get('errors', '?')} | {delta(err_rows, prev, 'errors')} |",
+            "",
+            f"> 上期：`{prev.get('_file', '?')}`",
+        ]
+    else:
+        lines.append("（首次盘点，没有上一期可对比）")
+
+    lines += [
         "",
         "## B 档：面试能讲（别写简历）",
         "",
