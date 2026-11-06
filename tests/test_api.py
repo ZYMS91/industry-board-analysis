@@ -22,7 +22,7 @@ def test_summary_endpoint_ok(monkeypatch):
     assert r.status_code == 200
     d = r.json()
     assert d["date"]
-    assert set(d["nums"]) == {"行数", "上涨", "下跌", "r", "top5_集中度"}
+    assert {"行数", "上涨", "下跌"} <= set(d["nums"])
     assert "测试评述" in d["summary"]
 
 

@@ -3,6 +3,7 @@ import pytest
 from summarize import check_numbers
 from summarize import template_summary
 from summarize import generate
+from summarize import market_mood
 
 def test_build_nums(tmp_path):
     p = tmp_path / "t.csv"
@@ -52,4 +53,24 @@ def test_check_numbers_rejects_duplicates():
     nums = {"行数": 90, "上涨": 7, "下跌": 83, "r": -0.263, "top5_集中度": 30.0}
     with pytest.raises(SystemExit):
         check_numbers("90 90 90 90 90", nums)
+
+def test_build_nums_without_amount_column(tmp_path):
+    p = tmp_path / "t.csv"
+    p.write_text("""涨跌幅
+1.0
+-1.0
+0.5
+""", encoding="utf-8-sig")
+
+    nums = build_nums(p)
+    assert set(nums) == {"行数", "上涨", "下跌"}
+
+def test_market_mood():
+    assert market_mood({"上涨": 84, "下跌": 6}) == "普涨"
+    assert market_mood({"上涨": 7, "下跌": 83}) == "普跌"
+    assert market_mood({"上涨": 45, "下跌": 45}) == "分化"
+
+
+
+
 

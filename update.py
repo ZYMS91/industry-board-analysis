@@ -16,11 +16,20 @@ r"""
 """
 from datetime import datetime
 from pathlib import Path
-
+from datetime import datetime
 import pandas as pd
 
 DATA_DIR = Path(__file__).parent / "data"
 STANDARD_COLS = ["板块名称", "涨跌幅", "上涨家数", "下跌家数", "总市值", "换手率", "成交额"]
+
+LOG = Path(__file__).parent / "logs" / "update.log"
+LOG.parent.mkdir(exist_ok=True)
+
+
+def log(src, status, detail=""):
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(LOG, "a", encoding="utf-8") as f:
+        f.write(f"{ts} | {src} | {status} | {detail}\n")
 
 
 def from_eastmoney():
@@ -69,6 +78,8 @@ def main():
             df, src = fn()
         except Exception as e:
             print(f"  × {fn.__name__} 失败：{type(e).__name__}")
+            log(fn.__name__, "FAIL", type(e).__name__)
+
             continue
 
         df = df[STANDARD_COLS]
@@ -82,6 +93,7 @@ def main():
 
         missing = [c for c in ["总市值", "换手率", "成交额"] if df[c].isna().all()]
         print(f"  √ 数据源：{src}")
+        log(src, "OK", f"{len(df)}行")
         print(f"    行数：{len(df)}")
         print(f"    快照：{snap.name}")
         if missing:
