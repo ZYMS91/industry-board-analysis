@@ -49,6 +49,7 @@
 | 满 90 分钟 | 强制休息 10 分钟（走动、喝水、不看屏幕） | 22:00 定时提醒 |
 | 最后 20 分钟 | 写 3 行日志进 `reports/` | `git commit` |
 | 收尾 5 分钟 | 复盘三问：现象 → 根因类别 → 下次怎么提前发现 | 错误库 +1 条 |
+| **收尾 15 分钟** | **模拟面试 5 题**：当天学的 2 题 + 历史错误 2 题 + 项目细节/软问题 1 题 | 答不上的当场记进错误库 |
 
 **硬规矩**
 
@@ -95,3 +96,4 @@
 | 11-05 | 08:49 新增 `evidence.py`（硬数字盘点，09:01 加环比）；12:40 BOSS 直聘投出试水段第 1 家（测试开发·深圳）；18:15 新增 `app.py` FastAPI `/summary`（返回 date/5 指标/中文摘要）+ `tests/test_api.py` 2 条（monkeypatch 假 LLM，降级不 500）；21:57 新增 `AGENTS.md`；22:16 PLAN 改「试水+放量」两段投递、gitignore 加 jobs、纳入 trae 规则；22:21 补全 requirements（fastapi/uvicorn/httpx） | `pytest -q` **12 passed**（复盘实跑）；7 次 commit（08:49→22:21）；data/latest.csv 15:35 新快照（8 天连续）；**但 `reports/api-20261105.json` 不存在 → 20:30 唯一动作（uvicorn + 真实 curl）未做，2 小时内改做了 3 次文档/配置提交**；`test_api` 降级测试单跑会真调 LLM（实测 pop 掉 key 后 `import summarize` 仍 `AFTER_IMPORT=True`）；阶段 1 判据① 连续第 2 天未达成 |
 | 11-06 | 07:54 `3fc107e` 接口测试加 `pytestmark skipif`（无快照则跳过）；12:26 手动跑一次采集；12:48 `4a219ed` `build_nums` 支持可选指标（缺成交额则不输出 r 与集中度）+ 新增 `market_mood` 判断方向并注入 prompt，测试 12→14；15:35 计划任务自动采集 496 行（`logs/update.log` 记录 OK）；17:46 AI 代写 `reports/project-summary.md`（未提交、未加 gitignore）；18:00–18:26 模拟面试三问 | `pytest -q` **14 passed**（复盘实跑）；2 次 commit；**但 20:30 唯一动作（uvicorn + 真实 curl → `reports/api-20261106.json`）完全未做**：`find` 无 api-*.json、8000 无监听、12:48 后零 commit；project-summary 数字两处错（写 10 个交易日，实测 12；「全新 venv 已实测」无证据）；`test_api.py` 重复 import（打补丁第4次）+ 断言放宽为子集；模拟面试「两源都挂会怎样」「哪个测试会红」两问答不出。阶段 1 判据① 连续第 3 天空着 |
 | 11-07 | 14:47 承认 Q7（CSV→SQLite 怎么改）答不出，让 AI 讲；15:00 答案 27 行由 AI 写入 `reports/interview-qa.md`；自述「可能只是看懂了」，约定当晚实操 data_repo 提取 | `pytest -q` **14 passed**（复盘实跑 1.95s）；**但全天 0 commit、`find` 无 `api-*.json`、8000/8001 无监听、`data_repo.py` 不存在、`read_csv` 仍 7 处**；20:30 唯一动作第 8 次落空；且 15:00 与 20:30 两个「唯一动作」互相冲突（前者 data_repo、后者 uvicorn），结果两个都没做——教练的排期错误；17:18 转 huaweihermes 会话无产出；22:30 复盘任务未触发，复盘与日志缺失，已补；阶段 1 判据① 连续第 4 天空着 |
+| 11-08 | 16:37 贴出 `data_repo.py` 但磁盘 0 字节（写了没存）被发现并修正；17:07–17:10 逐文件把 `pd.read_csv` 换成 `load_csv`（summarize/analyze/chart/stats/app），17:14 `d5e6546`；17:16 计划加「每日模拟面试 5 题」并发第一场，19:27 与 20:02 两轮作答（Q3 全对、Q1 两轮未答对、Q4 不会），20:28 自述累了收工；21:00 手跑 `evidence.py`（未提交） | `pytest -q` **14 passed**（复盘实跑 1.90s）、stats 输出 n=496 up=53 down=443；`read_csv` 剩 2 处（`data_repo.py` 唯一定义 + `update.py` 异常恢复路径）；**但 20:30 唯一动作（uvicorn + 真实 curl → `reports/api-20261108.json`）未做**：0 个 `api-*.json`、无 8000/8001 监听、20:29 后零 commit；`CSV_latest` 仍两份定义（`data_repo.py:4`、`summarize.py:9`）；阶段 1 判据① 连续第 5 天空着；日志缺失，已补 |
