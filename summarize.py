@@ -4,11 +4,12 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import requests
+from data_repo import load_csv
 
 CSV_latest = Path(__file__).parent / "data" / "latest.csv"
 load_dotenv(Path(__file__).parent / ".env")
 def build_nums(CSV_latest):
-    df = pd.read_csv(CSV_latest, encoding="utf-8-sig")
+    df = load_csv(CSV_latest)
 
     # 涨跌幅是必需字段，没有它什么都算不了
     if df["涨跌幅"].notna().sum() == 0:
@@ -48,7 +49,6 @@ def check_numbers(text, nums):
     if missing:
         print("不通过：文案缺少这些字段值", missing)
         raise SystemExit(1)
-
     print(f"校验通过：{len(found)} 个数字全部可溯源")
 
 def market_mood(nums):

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import pandas as pd
 from summarize import build_nums, generate, CSV_latest
+from data_repo import load_csv
 
 app = FastAPI()
 
@@ -9,7 +10,7 @@ app = FastAPI()
 def get_summary():
     nums = build_nums(CSV_latest)
 
-    df = pd.read_csv(CSV_latest, encoding="utf-8-sig")
+    df = load_csv(CSV_latest)
     data_date = df["抓取时间"][0]
 
     return {

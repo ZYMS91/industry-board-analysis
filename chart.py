@@ -14,6 +14,7 @@ matplotlib.use("Agg")            # 不弹窗口，直接存文件
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
+from data_repo import load_csv
 
 # ===== 中文字体配置（不给这三行，中文会变成方块）=====
 plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei"]
@@ -21,7 +22,7 @@ plt.rcParams["axes.unicode_minus"] = False   # 让负号正常显示，不然也
 
 # ===== 管道活：取数据 =====
 csv_path = Path(__file__).parent / "data" / "latest.csv"
-df = pd.read_csv(csv_path, encoding="utf-8-sig")
+df = load_csv(csv_path)
 print("数据来源:", df["数据源"][0], "| 抓取时间:", df["抓取时间"][0])
 
 

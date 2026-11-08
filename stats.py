@@ -1,11 +1,11 @@
 """Compute the numbers the README/reports need from a local snapshot. Read-only."""
 import math
 import sys
-
+from data_repo import load_csv
 import pandas as pd
 
 CSV = sys.argv[1]
-df = pd.read_csv(CSV, encoding='utf-8-sig')
+df = load_csv(CSV)
 
 n = len(df)
 up = int((df['涨跌幅'] > 0).sum())
