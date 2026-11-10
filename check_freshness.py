@@ -18,9 +18,18 @@ if not CSV.exists():
 df = load_csv(CSV)
 fetched = df ["抓取时间"][0][:10]
 today = str(date.today())# 2. 读「抓取时间」第一行，取前 10 位（"2026-11-09"）
+
 if fetched == today:
+    # 日期对了，再查关键字段是否有值
+    full = load_csv(CSV)                    # 这次读全表，不要 nrows=1
+    if full["涨跌幅"].notna().sum() == 0:
+        print(f"警告：数据日期是今天，但涨跌幅列全空")
+        log(f"BAD {fetched} 涨跌幅全空")
+        raise SystemExit(1)
+
     print(f"正常：数据日期 {fetched}")
     log(f"OK {fetched}")
+
 else: # 3. 和 str(date.today()) 比
     print(f"警告:数据不是今天的，最新是{fetched}")
     log(f"STALE 最新 {fetched}")
