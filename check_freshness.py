@@ -20,6 +20,10 @@ def evaluate(df, today_str):
     if df["涨跌幅"].notna().sum() == 0:
         return "BAD", fetched
 
+    if len(df) < 50:
+        return "BAD", fetched
+
+
     return "OK", fetched
 
 
