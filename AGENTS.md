@@ -22,6 +22,8 @@ A 股行业板块行情分析管线：每日收盘后自动采集 90 个行业�
 
 ```
 update.py        唯一联网的脚本。抓取 → data/*.csv 快照。失败自动降级备源
+data_repo.py     数据访问层。load_csv() 是全项目唯一的 CSV 读取入口，换存储只改这里
+check_freshness.py  交易日 15:45 检查数据新鲜度与可用性，写 logs/freshness.log
 analyze.py       读本地快照，输出三段分析（不联网）
 stats.py         计算分布、相关系数、p 值（不联网）
 chart.py         生成 top10.png（不联网）

@@ -13,7 +13,7 @@
 | 项 | 值 | 怎么验 |
 |---|---|---|
 | 代码量 | **908 行**（产品 759 + 测试 149） | `wc -l *.py tests/*.py` |
-| 测试 | **14 个，全绿** | `python -m pytest -q` |
+| 测试 | **17 个，全绿** | `python -m pytest -q` |
 | 提交 | **49 次，15 天**（2026-10-23 ~ 11-06） | `git rev-list --count HEAD` |
 | 数据 | **14 份快照**，覆盖 10 个交易日 | `ls data/industry_*.csv` |
 | 自动化 | Windows 计划任务，交易日 **15:35** 自动采集 | `schtasks /query /tn day01_update` |
@@ -29,16 +29,26 @@ update.py  ── 唯一联网的脚本 ──→ data/industry_YYYYMMDD_HHMMSS.
    │                                   │
    │ 东财主源（496 板块）                │ latest.csv
    │ 同花顺备源（90 行业）              ↓
-   └─ 失败自动切换 ──────────→  summarize.py
-                                    ├── build_nums()      算 5 个指标
-                                    ├── market_mood()     判断普涨/普跌/分化
-                                    ├── generate()        LLM 或模板
-                                    └── check_numbers()   数字溯源校验
-                                            ↓
-                                    app.py（FastAPI）
-                                            ↓
-                                    GET /summary → JSON
+   └─ 失败自动切换、都失败保留旧数据 ──→ data_repo.py（唯一读取入口）
+                                          ├── load_csv(path)
+                                          └── load_latest()
+                                                ↓
+                                    check_freshness.py（15:45）
+                                          ├── 日期不是今天 → STALE
+                                          └── 日期对但涨跌幅全空 → BAD
+                                                ↓
+                                          summarize.py
+                                            ├── build_nums()      算指标（缺字段则跳过）
+                                            ├── market_mood()     判断普涨/普跌/分化
+                                            ├── generate()        LLM 或模板（降级）
+                                            └── check_numbers()   双向数字溯源校验
+                                                  ↓
+                                            app.py（FastAPI）
+                                                  ↓
+                                            GET /summary → JSON
 ```
+
+**日志分层**：`logs/update.log` 记录采集（OK/FAIL），`logs/freshness.log` 记录数据状态（OK/STALE/BAD/FAIL）。四种状态对应四种故障，日志一看就知道该查哪里。
 
 **关键约束：只有 `update.py` 联网。** 其余全部只读本地 CSV，所以数据源挂了、断网时分析和报告照常能跑。
 

@@ -4,35 +4,52 @@ import pandas as pd
 from data_repo import load_csv
 
 CSV = Path(__file__).parent / "data" / "latest.csv"
-LOG = Path(__file__).parent/"logs"/"freshness.log"
+LOG = Path(__file__).parent / "logs" / "freshness.log"
 LOG.parent.mkdir(exist_ok=True)
+
+
+def evaluate(df, today_str):
+    """纯函数：给数据和今天的日期，返回 (状态, 详情)。
+    状态只有三种：OK / STALE / BAD
+    """
+    fetched = str(df["抓取时间"][0])[:10]
+
+    if fetched != today_str:
+        return "STALE", fetched
+
+    if df["涨跌幅"].notna().sum() == 0:
+        return "BAD", fetched
+
+    return "OK", fetched
+
 
 def log(msg):
     with open(LOG, "a", encoding="utf-8") as f:
         f.write(f"{date.today()} | {msg}\n")
-if not CSV.exists():
-    print("警告：latest.csv 不存在，从未采集成功")# 1. 如果没有 latest.csv → 直接告警（连数据都没有）
-    log("FAIL not latest.csv")
-    raise SystemExit(1)
 
-df = load_csv(CSV)
-fetched = df ["抓取时间"][0][:10]
-today = str(date.today())# 2. 读「抓取时间」第一行，取前 10 位（"2026-11-09"）
 
-if fetched == today:
-    # 日期对了，再查关键字段是否有值
-    full = load_csv(CSV)                    # 这次读全表，不要 nrows=1
-    if full["涨跌幅"].notna().sum() == 0:
-        print(f"警告：数据日期是今天，但涨跌幅列全空")
-        log(f"BAD {fetched} 涨跌幅全空")
-        raise SystemExit(1)
+def main():
+    if not CSV.exists():
+        print("警告：latest.csv 不存在，从未采集成功")
+        log("FAIL 无 latest.csv")
+        return 1
 
-    print(f"正常：数据日期 {fetched}")
-    log(f"OK {fetched}")
+    df = load_csv(CSV)
+    status, detail = evaluate(df, str(date.today()))
 
-else: # 3. 和 str(date.today()) 比
-    print(f"警告:数据不是今天的，最新是{fetched}")
-    log(f"STALE 最新 {fetched}")
-    raise SystemExit(1)
-# 4. 不相等 → 打印警告 + 写进 freshness.log
-# 5. 相等 → 写一行正常记录（有记录才能证明"它在工作）
+    if status == "OK":
+        print(f"正常：数据日期 {detail}")
+        log(f"OK {detail}")
+        return 0
+    elif status == "STALE":
+        print(f"警告：数据不是今天的，最新是 {detail}")
+        log(f"STALE 最新 {detail}")
+        return 1
+    else:
+        print("警告：数据日期是今天，但涨跌幅列全空")
+        log(f"BAD {detail} 涨跌幅全空")
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
