@@ -67,26 +67,59 @@ def compare(stats, nums):
             失败 += 1
 
     # ---------- 可选字段：成交额缺失时 r 可能算不出来 ----------
+    #
+    # 必选字段两边都必须有值，简单。可选字段不行：
+    # 东财源没有「成交额」这一列，两条路都可能拿不出 r。
+    # 所以这里不是「比数值」，而是先判断「谁有值、谁没值」，再决定要不要比。
+    #
     for k_stat, k_num in OPTIONAL.items():
-        左有键 = k_stat in stats
-        左为空 = 左有键 and str(stats[k_stat]) == "NA"
-        左没值 = (not 左有键) or 左为空      # 「键不存在」和「值是 NA」都是没有值
+        # ── 第一步：把两边的状态各压成一个布尔值 ──
+        #
+        # 左边 = stats.py 的输出（字典 stats）
+        # 「没有值」有两种写法，对下游来说完全一样，所以合成一个：
+        #   (a) 键不存在        → 字典里压根没有 "r"
+        #   (b) 键在，值是 "NA" → 打印了 r=NA，表示算不出来
+        左有键 = k_stat in stats                          # stats 里有 "r" 这个键吗
+        左为空 = 左有键 and str(stats[k_stat]) == "NA"     # 有键，但值是字符串 "NA" 吗
+        左没值 = (not 左有键) or 左为空                    # 上面两种情况 (a)(b) 都算「没有值」
+        # 右边 = build_nums 的返回值（字典 nums）
+        # 注意多查一次 is not None：键在但值是 None，对下游也等于没有
         右有值 = k_num in nums and nums[k_num] is not None
 
-        # ① 都说没有 → 一致
+        # ── 第二步：四选一 ──
+        #  左没值  右有值     意思                     动作
+        #  ───────────────────────────────────────────────────────
+        #  True    False    都说没有（正常）           放过
+        #  True    True     一个有一个没有（矛盾）      报错
+        #  False   False    一个有一个没有（矛盾）      报错
+        #  False   True     两边都有                    比数
+
+        # ① 都说没有 → 一致。
+        # 场景：东财源无成交额，stats.py 打 r=NA，build_nums 也没 r。
+        # 两个人都说「我没有」，不是错误，跳过。
         if 左没值 and not 右有值:
             continue
 
-        # ② 右边有值，左边说没有 → nums 多算了
+        # ② 左边说没有，右边却有 → nums 多算了。
+        # 场景：同样一份数据，stats.py 算不出 r，build_nums 却算出了 -0.28。
+        # 说明两条路读到的数据不同，或判断条件不同 —— 必须查。
+        #
+        # 为什么不写成 elif：后面每个分支都 continue，效果等同于 elif，
+        # 但平铺更好读，加分支时不用改缩进。
+        #
+        # stats.get(k_stat, '缺键')：这里左边正可能是「键不存在」，
+        # 用 stats[k_stat] 会 KeyError，.get() 给个默认值就不会崩。
         if 左没值 and 右有值:
             msgs.append(
                 f"不一致：build_nums 有 {k_num}={nums[k_num]}，"
                 f"stats.py 却是 {stats.get(k_stat, '缺键')}"
             )
             失败 += 1
-            continue
+            continue   # ← 必须跳出，否则会掉到 ③ 去 float("NA") 崩掉
 
-        # ④ 左边有值，右边没有 → nums 漏算了
+        # ④ 左边有值，右边却没有 → nums 漏算了。
+        # 场景：stats.py 算出 r=-0.2836，build_nums 的字典里根本没 r。
+        # 和 ② 方向相反：② 是多算，④ 是漏算，排查时指向不同的 bug。
         if (not 左没值) and (not 右有值):
             msgs.append(
                 f"不一致：stats.py 有 {k_stat}={stats[k_stat]}，"
@@ -95,11 +128,17 @@ def compare(stats, nums):
             失败 += 1
             continue
 
-        # ③ 两边都有值 → 比数
-        # build_nums 用 round(..., 3)，所以按 3 位对齐再比；
-        # 直接比原始值会把「-0.2836 vs -0.284」误判成不一致。
+        # ③ 两边都有数字 —— 到这里才轮到比数值。
+        #
+        # 为什么先 round 到 3 位再比：
+        #   stats.py   输出 -0.2836（原始值，格式化 4 位）
+        #   build_nums 里写的是 round(..., 3) → -0.284
+        # 直接比 -0.2836 != -0.284 会天天误报。
+        # 这是「精度口径不同」，不是算错 —— 对齐口径比放宽容差安全：
+        # 容差 0.001 会掩盖 0.0009 的真错误，对齐 3 位只放过舍入差。
         a = round(float(stats[k_stat]), 3)
         b = round(float(nums[k_num]), 3)
+        # 用 1e-9 而不是 ==：浮点数 round 后仍可能有极小的表示误差
         if abs(a - b) > 1e-9:
             msgs.append(f"不一致：{k_num}  stats={stats[k_stat]}  build_nums={nums[k_num]}")
             失败 += 1

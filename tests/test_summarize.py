@@ -70,3 +70,23 @@ def test_market_mood():
     assert market_mood({"上涨": 7, "下跌": 83}) == "普跌"
     assert market_mood({"上涨": 45, "下跌": 45}) == "分化"
 
+
+def test_build_nums_rejects_all_nan_column(tmp_path):
+    """涨跌幅整列为空时必须抛 ValueError，不能返回一堆 0。
+
+    守的是 summarize.py 里这两行：
+        if df["涨跌幅"].notna().sum() == 0:
+            raise ValueError("涨跌幅列全为空，本份快照无法使用")
+    删掉它们，这条必须变红。
+    """
+    import pandas as pd
+
+    p = tmp_path / "all_nan.csv"
+    pd.DataFrame({
+        "板块名称": ["A", "B"],
+        "涨跌幅": [None, None],
+    }).to_csv(p, index=False, encoding="utf-8-sig")
+
+    with pytest.raises(ValueError, match="涨跌幅列全为空"):
+        build_nums(p)
+
