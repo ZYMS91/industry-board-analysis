@@ -70,7 +70,3 @@ def test_market_mood():
     assert market_mood({"上涨": 7, "下跌": 83}) == "普跌"
     assert market_mood({"上涨": 45, "下跌": 45}) == "分化"
 
-
-
-
-
