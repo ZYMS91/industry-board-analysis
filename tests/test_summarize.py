@@ -49,6 +49,19 @@ def test_check_numbers_accepts_valid_text():
     text = template_summary(nums)
     check_numbers(text, nums)      # 正常文案不该抛异常
 
+
+def test_位置对调目前漏过_已知边界():
+    """钉住当前行为：白名单只比数字集合，不比语义方向。
+
+    对调「上涨 7 / 下跌 83」后每个数字仍在白名单里，check_numbers 放行 → exit 0。
+    这是已知边界（2026-11-18 注入实验 4/5，见 reports/check-numbers-bench.txt）。
+    哪天要修成「按字段名核对」，这条测试必须变红——那时删掉它、换成拦截断言。
+    """
+    nums = {"行数": 90, "上涨": 7, "下跌": 83}
+    swapped = "今日 90 个板块中，上涨 83 个，下跌 7 个。"
+    check_numbers(swapped, nums)   # 不抛异常 = 漏过（当前行为）
+
+
 def test_check_numbers_rejects_duplicates():
     nums = {"行数": 90, "上涨": 7, "下跌": 83, "r": -0.263, "top5_集中度": 30.0}
     with pytest.raises(SystemExit):
