@@ -103,3 +103,8 @@ def test_build_nums_rejects_all_nan_column(tmp_path):
     with pytest.raises(ValueError, match="涨跌幅列全为空"):
         build_nums(p)
 
+def test_写死的测试会被拦下():
+    nums = {"行数":90,"上涨":23}
+    text = "今日90个板块中，上涨23个（阈值0.5）。"
+    with pytest.raises(SystemExit):
+        check_numbers(text,nums)
