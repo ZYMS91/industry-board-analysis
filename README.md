@@ -85,15 +85,17 @@ reports/      每次快照的结论归档，一个快照一篇
 
 ## 如何复现
 
-```
-python update.py                    # 抓数据 → data/latest.csv（需联网）
-python analyze.py                   # 三段分析
-python chart.py                     # 生成 top10.png
-python stats.py data/latest.csv     # 报告要用的分布 / 相关系数 / p 值
-```
+# 1) 一次性环境（Python 3.14+）
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-`analyze.py`、`chart.py`、`stats.py` 只读本地 CSV，不联网；只有 `update.py` 需要网络。
-数据源不可用时，`update.py` 会自动切换备用源；全部失败则保留上次快照并提示。
+# 2) 之后每条都这样调（不是裸 python）
+.venv\Scripts\python.exe update.py
+.venv\Scripts\python.exe analyze.py
+.venv\Scripts\python.exe chart.py
+.venv\Scripts\python.exe stats.py data/latest.csv
+.venv\Scripts\python.exe summarize.py     # 没配 key 会降级成模板，能跑
+
 
 ## 环境
 
