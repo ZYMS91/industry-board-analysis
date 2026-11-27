@@ -66,3 +66,30 @@ README 写 **41 个**，实测 **43 passed**（本轮新增 `test_写死的测�
 2. `pip install -r requirements.txt` —— 连 `requirements.txt` 的存在都没提
 
 **按 ISSUES.md 的规矩：「只读 README」做不到，本 issue 退回。**
+
+---
+
+# 终检（第 2 轮）— ✅ 通过
+
+- **时间**：2026-11-26 18:20:34 → 18:21:04（**30 秒**，含装依赖）
+- **前提**：`git clone` 到全新目录 `H:\hermes\cache\scratch\stranger_final\repo`，61 个文件，**只读 README，零手工步骤**
+
+| 时刻 | 命令 | 结果 |
+|---|---|---|
+| 18:20:34 | `git clone` | ✅ 61 文件 |
+| 18:20:34 | `python -m venv .venv` | ✅ |
+| 18:20:36 | `pip install -r requirements.txt` | ✅ 20 秒 |
+| 18:20:56 | `update.py` | ✅ 90 行（**主源失败自动切同花顺**，降级链路顺手验了） |
+| 18:21:02 | `analyze.py` | ✅ 自动选「成交额」当流动性字段 |
+| 18:21:02 | `chart.py` | ✅ `top10.png` |
+| 18:21:03 | `stats.py` | ✅ `n=90 up=58 down=32 range=-1.93~4.51` |
+| 18:21:04 | `summarize.py` | ✅ `n=90/up=58/down=32 + r=0.438 + 成交额前五占 33.9%`，`校验通过：5 个数字全部可溯源` |
+| 18:21:04 | `pytest -q` | ✅ **43 passed** |
+
+## Review 发现（#6 要求：必须指出真问题）
+
+1. **`python` 可能不是 Python**（P1）：Windows 上 `python` 常被 Microsoft Store 别名占用，敲 `python -m venv .venv` 会弹商店而不是建环境。建议写成 `py -3 -m venv .venv` 或在 README 注明「若弹商店，用 `py`」。
+2. **降级是静默的**（P1）：`summarize.py` 没有 key 时只打印一行「LLM 不可用…已降级为模板文案」，但模板文案读起来和 AI 写的一样。陌生人会以为这就是正式产出。建议 README 明写「无 key = 模板文案，不是模型写的」。
+3. **口径会随数据源变**（P2）：本轮东财失败切了同花顺，行数 496→90、结论完全不可比。README 只说「跨源不可比」，没写「跑完先确认这次是哪家源」。建议 `analyze.py` 首行输出加醒目标记，或 README 把「看数据来源」放进复现步骤第 3.5 步。
+
+**这三条尚未入错误库**——按规矩需要你口述三问（现象/根因类别/下次怎么提前发现）才入库。
