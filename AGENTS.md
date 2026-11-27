@@ -90,7 +90,7 @@ curl.exe http://127.0.0.1:8000/summary      # 验证接口
 
 ## 已知缺口（未解决，别当成已完成）
 
-这两条是主动记录的自查结果，讲项目时要主动说，不要等人问出来。
+这条是主动记录的自查结果，讲项目时要主动说，不要等人问出来。
 
 1. **同源自证：两条校验路读同一份数据。**
    `verify_report.parse_stats()` 和 `summarize.build_nums()` 读的都是 `data/latest.csv`
@@ -99,11 +99,15 @@ curl.exe http://127.0.0.1:8000/summary      # 验证接口
    能拦数据问题的是 `check_freshness.py`（日期 + 关键列全空），不是互相比对。
    错误库 2026-10-27 记过一次（「校验是同源自证，拦不住幻觉」）。
 
-2. **`/summary` 接口没接文案校验。**
-   `app.py:19` 直接 `generate(nums)`；而 `check_numbers()` 只在 `summarize.py` 的 `__main__` 里调用。
-   也就是说：**命令行跑有双向白名单把关，走 HTTP 接口没有。**
-   `llm_summary()` 里那道「评述含数字就抛异常」只挡模型，不挡「数字与代码算的值不符」。
-   待办：把 `check_numbers` 移进 `generate()`，让两条入口共用同一道关卡。
+2. ~~**`/summary` 接口没接文案校验。**~~ **已于 2026-11-26 修复（ISSUES #2）。**
+   做法：`check_numbers()` 移进 `generate()`，成为唯一调用点；校验失败抛
+   `NumberMismatch(SystemExit)`，`app.py` 显式接住并返回 **500 + 具体哪个数字对不上**。
+   为什么继承 `SystemExit` 而不是 `Exception`：`generate()` 里的 `except Exception`
+   只该处理「LLM 不可用」，不能把「校验失败」静默降级成模板文案。
+   验证：`tests/test_api.py` 两条（多出的数字 500 / 值全缺也 500）、
+   `tests/test_summarize.py` 三条（generate 抛异常、降级仍校验、只允许一个调用点）；
+   变异测试：拿掉 `check_numbers` 调用 → 4 条测试变红。
+   顺带修掉：`__main__` 里重复的第二次 `check_numbers` 调用（分叉源头）。
 
 
 ## 交接单（开新对话时填这 5 行）

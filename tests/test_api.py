@@ -13,8 +13,13 @@ pytestmark = pytest.mark.skipif(not CSV.exists(), reason="没有快照文件，�
 
 
 def test_summary_endpoint_ok(monkeypatch):
-    # 用假函数替换 LLM 调用：测试不花 API 钱、不依赖网络
-    monkeypatch.setattr("summarize.llm_summary", lambda nums: "测试评述")
+    # 用假函数替换 LLM 调用：测试不花 API 钱、不依赖网络。
+    # 注意：假函数必须返回「模板文案 + 一句无数字评述」——generate() 现在会做双向校验，
+    # 只返回一句「测试评述」会因为缺少全部字段值被拒（这正是本次改造的效果）。
+    monkeypatch.setattr(
+        "summarize.llm_summary",
+        lambda nums: summarize.template_summary(nums) + " 资金集中在头部。",
+    )
 
     from app import app
     client = TestClient(app)
@@ -24,7 +29,7 @@ def test_summary_endpoint_ok(monkeypatch):
     d = r.json()
     assert d["date"]
     assert {"行数", "上涨", "下跌"} <= set(d["nums"])
-    assert "测试评述" in d["summary"]
+    assert "资金集中在头部" in d["summary"]
 
 
 def test_summary_ok_without_key(monkeypatch):
@@ -55,3 +60,38 @@ def test_summary_200_when_llm_raises(monkeypatch):
 
     assert r.status_code == 200, f"LLM 崩了也不该 500：{r.text}"
     assert r.json()["summary"]
+
+
+def test_summary_endpoint_rejects_unrecognized_number(monkeypatch):
+    """接口路径也必须校验：评述里出现白名单外的数字 → 500，并说明是哪个数字。
+
+    这条守的是 ISSUES #2：改回 `return generate(nums)` 不接改验，
+    或者把 check_numbers 从 generate() 里挪走，这条必须变红。
+    """
+    def bad(nums):
+        return summarize.template_summary(nums) + " 资金集中度约 0.5。"
+
+    monkeypatch.setattr(summarize, "llm_summary", bad)
+
+    client = TestClient(app_module.app)
+    r = client.get("/summary")
+
+    assert r.status_code == 500, f"编造的数字必须被拒，实际 {r.status_code}"
+    detail = r.json()["detail"]
+    assert detail["error"] == "文案校验未通过"
+    assert "0.5" in detail["无法溯源"]
+    assert detail["缺少字段值"] == []   # 模板部分齐全，只多不少
+
+
+def test_summary_endpoint_rejects_missing_field_values(monkeypatch):
+    """反向漏检：评述里一个数字都没写（值全缺）也必须被拒。"""
+    monkeypatch.setattr(summarize, "llm_summary", lambda nums: "今日市场分化明显。")
+
+    client = TestClient(app_module.app)
+    r = client.get("/summary")
+
+    assert r.status_code == 500
+    detail = r.json()["detail"]
+    assert detail["无法溯源"] == []
+    assert set(detail["缺少字段值"]) >= {"行数", "上涨", "下跌"} or detail["缺少字段值"], \
+        f"必须报出缺失的字段值：{detail}"

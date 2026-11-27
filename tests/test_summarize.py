@@ -108,3 +108,57 @@ def test_写死的测试会被拦下():
     text = "今日90个板块中，上涨23个（阈值0.5）。"
     with pytest.raises(SystemExit):
         check_numbers(text,nums)
+
+
+# ---------- ISSUES #2：校验进 generate()，两个入口共用 ----------
+
+def test_generate_rejects_bad_llm_text(monkeypatch):
+    """LLM 编了白名单外的数字 → generate() 必须抛 NumberMismatch，而且要指出是哪个。
+
+    守的是 summarize.generate() 末尾那句 `check_numbers(text, nums)`：
+    删掉它，这条会红（会直接返回带 0.5 的文案）。
+    """
+    import summarize
+
+    nums = {"行数": 90, "上涨": 58, "下跌": 32}
+    monkeypatch.setattr(
+        summarize, "llm_summary",
+        lambda n: summarize.template_summary(n) + " 资金集中度约 0.5。",
+    )
+
+    with pytest.raises(summarize.NumberMismatch) as ei:
+        summarize.generate(nums)
+
+    assert ei.value.offenders == ["0.5"]
+    assert ei.value.missing == []
+    assert "无法溯源" in str(ei.value)
+
+
+def test_generate_degrades_but_still_validates(monkeypatch):
+    """没有 key → 降级成模板，且模板本身过校验（不能因为降级就跳过校验）。"""
+    import summarize
+
+    nums = {"行数": 90, "上涨": 58, "下跌": 32}
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+
+    text = summarize.generate(nums)
+
+    assert "90 个板块" in text
+    assert "上涨 58 个" in text
+    assert "下跌 32 个" in text
+
+
+def test_check_numbers_has_single_call_site():
+    """check_numbers 只允许有一个调用点（命令行和接口共用 generate()）。
+
+    守的是 ISSUES #2 第 4 条验收标准：多一个调用点就说明又分叉了。
+    """
+    from pathlib import Path
+
+    src = Path(__file__).parent.parent.joinpath("summarize.py").read_text(encoding="utf-8")
+    calls = [
+        line.strip() for line in src.splitlines()
+        if "check_numbers(" in line and not line.strip().startswith("def ")
+    ]
+    assert len(calls) == 1, f"check_numbers 应该只有一个调用点，实际 {calls}"
+    assert calls[0].startswith("check_numbers(text, nums)")

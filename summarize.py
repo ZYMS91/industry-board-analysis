@@ -30,6 +30,23 @@ def build_nums(CSV_latest):
 
     return nums
 
+# 校验失败专用异常。
+# 为什么继承 SystemExit 而不是 Exception：
+#   1) CLI 语义就是「终止」，历史行为是 SystemExit(1)，测试也这么断言；
+#   2) SystemExit 不是 Exception 的子类，所以 generate() 里的
+#      `except Exception` 不会把「校验失败」误当成「LLM 不可用」而静默降级成模板。
+class NumberMismatch(SystemExit):
+    def __init__(self, offenders, missing):
+        self.offenders = list(offenders)            # 文案里出现、但白名单里没有的数字
+        self.missing = sorted(str(m) for m in missing)  # 白名单里有、但文案里没出现的值
+        parts = []
+        if self.offenders:
+            parts.append(f"无法溯源：{self.offenders}")
+        if self.missing:
+            parts.append(f"缺少字段值：{self.missing}")
+        super().__init__("文案校验未通过（" + "；".join(parts) + "）")
+
+
 # 校验函数：确认文案里的每个数字都能在 nums 里找到出处
 def check_numbers(text, nums):
     found = re.findall(r"-?\d+\.?\d*", text)
@@ -38,18 +55,13 @@ def check_numbers(text, nums):
     for v in nums.values():
         allowed.add(str(v))
 
-    # 逐个核对：文案里的每个数字都必须在白名单里
-    for x in found:
-        if x not in allowed:
-            print("不通过：", x, "无法溯源")
-            raise SystemExit(1)
-
-    # 覆盖检查：白名单里的每个值都必须在文案里出现
+    # 双向核对：文案里的每个数字都必须在白名单里；白名单里的每个值也必须在文案里
+    offenders = [x for x in found if x not in allowed]
     missing = allowed - set(found)
-    if missing:
-        print("不通过：文案缺少这些字段值", missing)
-        raise SystemExit(1)
-    print(f"校验通过：{len(found)} 个数字全部可溯源")
+    if offenders or missing:
+        raise NumberMismatch(offenders, missing)
+
+    return found
 
 def market_mood(nums):
     total = nums["上涨"] + nums["下跌"]
@@ -100,16 +112,31 @@ def llm_summary(nums):
 
     return template_summary(nums) + " " + comment
 def generate(nums):
+    """生成日报文案，并在这里做**唯一一次**文案校验。
+
+    命令行（__main__）和 HTTP 接口（app.py）都走这个函数 —— 校验只有一个入口，
+    不会出现「命令行校验了、接口没校验」的分叉。
+    校验失败抛 NumberMismatch（SystemExit 子类），不会被下面的 except Exception 吞掉。
+    """
     try:
-        return llm_summary(nums)
+        text = llm_summary(nums)
     except Exception as e:
         print(f"LLM 不可用（{e}），已降级为模板文案")
-        return template_summary(nums)
+        text = template_summary(nums)
+
+    check_numbers(text, nums)  # 唯一调用点
+    return text
 
 if __name__ == "__main__":
+    import sys
+
     nums = build_nums(CSV_latest)
-    # 用算出来的数字拼一段中文文案（f-string 里的 {n} 会被替换成实际数值）
-    text = generate(nums)
+    try:
+        text = generate(nums)          # 校验已在这个函数里做完
+    except NumberMismatch as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
     print(text)
-    check_numbers(text, nums)  # 再校验
+    print(f"校验通过：{len(re.findall(r'-?\d+\.?\d*', text))} 个数字全部可溯源")
 
