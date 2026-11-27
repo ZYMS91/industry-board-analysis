@@ -80,7 +80,7 @@ reports/      每次快照的结论归档，一个快照一篇
   即成交额只能解释涨跌幅 7.3% 的变异。`stats.py` 已同时输出三者。
   下一步可改用更稳健的方法（Spearman 秩相关、分组对比）。
 - **自动采集**：计划任务 day01_update，交易日 15:35 跑 update.py。
-- **测试**：`pytest -q` → **41 个**（含 `tests/test_golden.py` 的 3 个金标用例；其余分布在 api / data / freshness / pick / stats / summarize / trend / verify）
+- **测试**：`pytest -q` → **43 个**（含 `tests/test_golden.py` 的 3 个金标用例；其余分布在 api / data / freshness / pick / stats / summarize / trend / verify）
 - **数据校验**：带 skipif，没有 CSV 时自动 skip 而不是崩。
 
 ## 如何复现
