@@ -10,6 +10,7 @@
      异源   ＝那天有快照，但不是本源抓的（可以换源对照，不是丢数）
      缺快照＝那天任何源都没有（可能是休市，也可能是漏采，要对照交易日历才知道）
 """
+import utf8stdout  # noqa: F401  强制本进程 stdout 用 UTF-8
 from datetime import date, timedelta
 from pathlib import Path
 import re

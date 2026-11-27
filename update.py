@@ -14,6 +14,7 @@ r"""
   2. 不同源的字段名不一样，统一映射成同一套标准列
   3. 全部源都失败时，不报错退出，而是保留旧数据并提示
 """
+import utf8stdout  # noqa: F401  强制本进程 stdout 用 UTF-8
 from datetime import datetime
 from pathlib import Path
 from datetime import datetime

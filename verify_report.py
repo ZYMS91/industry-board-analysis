@@ -8,6 +8,7 @@
 
 判据（阶段 1 ②）：摘要里每个数字都能在 stats.py 输出里找到出处。
 """
+import utf8stdout  # noqa: F401  强制本进程 stdout 用 UTF-8
 import re
 import subprocess
 import sys

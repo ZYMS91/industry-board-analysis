@@ -1,3 +1,4 @@
+import utf8stdout  # noqa: F401  强制本进程 stdout 用 UTF-8
 import re
 import pandas as pd
 from pathlib import Path

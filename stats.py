@@ -1,4 +1,5 @@
 """Compute the numbers the README/reports need from a local snapshot. Read-only."""
+import utf8stdout  # noqa: F401  强制本进程 stdout 用 UTF-8
 import math
 import sys
 from data_repo import load_csv
